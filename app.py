@@ -1,7 +1,7 @@
 import json
 import os
 import re
-from pathlib import Path
+import unicodedata
 import streamlit as st
 from dotenv import load_dotenv
 
@@ -29,71 +29,116 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+def obter_segredo_ou_env(chave: str) -> str:
+    """Busca uma variável primeiro no .env/ambiente e depois em st.secrets."""
+    valor_env = os.getenv(chave)
+    if valor_env and valor_env.strip():
+        return valor_env.strip()
+    try:
+        if chave in st.secrets:
+            return str(st.secrets[chave]).strip()
+    except Exception:
+        pass
+    return ""
+
+
 def obter_api_key(chave_manual: str) -> str:
     """Resolve a API Key com prioridade: Input manual -> .env -> st.secrets."""
     if chave_manual and chave_manual.strip():
         return chave_manual.strip()
-    
-    env_key = os.getenv("GEMINI_API_KEY")
-    if env_key:
-        return env_key.strip()
-    
-    try:
-        if "GEMINI_API_KEY" in st.secrets:
-            return st.secrets["GEMINI_API_KEY"].strip()
-    except Exception:
-        pass
-        
-    return ""
+    return obter_segredo_ou_env("GEMINI_API_KEY")
 
 
 @st.cache_data
-def carregar_curriculo_mestre(caminho: str = "data/curriculo_mestre.json") -> CurriculoMestre:
-    """Carrega e valida o JSON mestre usando Pydantic."""
+def carregar_curriculo_padrao(caminho: str = "data/curriculo_mestre.json") -> CurriculoMestre:
+    """Carrega e valida o JSON mestre padrão usando Pydantic."""
     with open(caminho, "r", encoding="utf-8") as f:
         dados = json.load(f)
     return CurriculoMestre(**dados)
 
 
-def sanitizar_nome_arquivo(texto: str) -> str:
-    """Limpa o nome da empresa/vaga para gerar um nome de arquivo válido no Windows."""
-    if not texto.strip():
-        return "Geral"
-    limpo = re.sub(r'[\\/*?:"<>|]', "", texto)
+def sanitizar_nome_arquivo(texto: str, fallback: str = "Geral") -> str:
+    """Remove acentos e caracteres inválidos para gerar nomes de arquivos seguros."""
+    if not texto or not texto.strip():
+        return fallback
+    sem_acentos = unicodedata.normalize("NFKD", texto).encode("ASCII", "ignore").decode("ASCII")
+    limpo = re.sub(r'[\\/*?:"<>|]', "", sem_acentos)
     limpo = re.sub(r'\s+', "_", limpo.strip())
-    return limpo[:40]
+    return limpo[:40] if limpo else fallback
 
 
 def main():
-    # --- SIDEBAR: Configurações ---
+    # --- SIDEBAR: Configurações e Fonte de Dados ---
     with st.sidebar:
         st.header("⚙️ Configurações")
         
         api_key_input = st.text_input(
-            "Gemini API Key (Opcional se no .env)",
+            "Gemini API Key",
             type="password",
-            help="Se já configurou GEMINI_API_KEY no arquivo .env ou st.secrets, deixe em branco."
+            help="Cole sua chave do Google AI Studio (ou configure GEMINI_API_KEY no arquivo .env local)."
         )
         api_key = obter_api_key(api_key_input)
         
         if api_key:
-            st.success("API Key detectada e pronta.", icon="✅")
+            st.success("API Key pronta para uso.", icon="✅")
         else:
-            st.warning("API Key não encontrada. Insira acima ou configure no .env.", icon="⚠️")
+            st.warning("API Key não encontrada. Cole sua chave acima para gerar.", icon="⚠️")
             
         st.divider()
-        st.subheader("📂 Base de Dados")
+        st.subheader("📂 Currículo Base (JSON)")
+
+        # Carrega primeiro o currículo padrão (público) para servir de fallback e template
         try:
-            curriculo_mestre = carregar_curriculo_mestre()
-            st.info(
-                f"**Perfil carregado:** {curriculo_mestre.dados_pessoais.nome_exibicao}\n\n"
-                f"• {len(curriculo_mestre.experiencias)} experiências\n"
-                f"• {len(curriculo_mestre.projetos)} projetos\n"
-                f"• {len(curriculo_mestre.certificacoes)} certificações"
-            )
+            curriculo_padrao = carregar_curriculo_padrao()
         except Exception as e:
             st.error(f"Erro ao carregar `data/curriculo_mestre.json`: {e}")
             st.stop()
+
+        arquivo_upload = st.file_uploader(
+            "Usar outro currículo (.json)",
+            type=["json"],
+            help="Opcional: envie seu próprio arquivo JSON no padrão do projeto. Se vazio, usa o perfil padrão."
+        )
+
+        # Cria cópia profunda para não mutar o objeto cacheado pelo Streamlit
+        curriculo_mestre = curriculo_padrao.model_copy(deep=True)
+        origem_dados = "Perfil Padrão"
+
+        if arquivo_upload is not None:
+            try:
+                conteudo_json = json.load(arquivo_upload)
+                curriculo_mestre = CurriculoMestre(**conteudo_json)
+                origem_dados = f"Upload ({arquivo_upload.name})"
+                st.success("JSON customizado validado com sucesso!", icon="✅")
+            except Exception as e:
+                st.error(f"JSON inválido ou fora do schema esperado: {e}")
+                st.info("Mantendo o currículo padrão ativo.")
+                curriculo_mestre = curriculo_padrao.model_copy(deep=True)
+                arquivo_upload = None
+
+        # Se estiver usando o currículo padrão e houver USER_PHONE no .env/secrets, injeta o telefone real
+        if arquivo_upload is None:
+            telefone_privado = obter_segredo_ou_env("USER_PHONE")
+            if telefone_privado:
+                curriculo_mestre.dados_pessoais.telefone = telefone_privado
+
+        st.info(
+            f"**Fonte ativa:** {origem_dados}\n\n"
+            f"**Candidato(a):** {curriculo_mestre.dados_pessoais.nome_exibicao}\n\n"
+            f"• {len(curriculo_mestre.experiencias)} experiências\n"
+            f"• {len(curriculo_mestre.projetos)} projetos\n"
+            f"• {len(curriculo_mestre.certificacoes)} certificações"
+        )
+
+        # Exporta o currículo padrão (sem o telefone privado injetado) como template para visitantes
+        st.download_button(
+            label="📥 Baixar modelo curriculo_mestre.json",
+            data=curriculo_padrao.model_dump_json(indent=2),
+            file_name="template_curriculo_mestre.json",
+            mime="application/json",
+            use_container_width=True,
+            help="Baixe este arquivo como modelo para preencher com os seus próprios dados e fazer upload acima."
+        )
 
     # --- ÁREA PRINCIPAL ---
     st.title("📄 ATS Resume Tailor — Engenharia & Análise de Dados")
@@ -129,7 +174,7 @@ def main():
 
         if btn_adaptar:
             if not api_key:
-                st.error("Por favor, configure sua `GEMINI_API_KEY` antes de continuar.")
+                st.error("Por favor, insira sua `GEMINI_API_KEY` na barra lateral antes de continuar.")
             elif len(descricao_vaga.strip()) < 30:
                 st.warning("Cole uma descrição de vaga mais completa para uma análise precisa.")
             else:
@@ -226,8 +271,13 @@ def main():
 
             # 3. Geração e Download do PDF
             pdf_bytes = gerar_pdf_ats(curriculo_mestre, curriculo_final)
-            sufixo_arquivo = sanitizar_nome_arquivo(st.session_state.get("empresa_vaga", ""))
-            nome_arquivo_pdf = f"Curriculo_Mirelly_Alvarenga_{sufixo_arquivo}.pdf"
+            nome_candidato_arquivo = sanitizar_nome_arquivo(
+                curriculo_mestre.dados_pessoais.nome_exibicao, fallback="Candidato"
+            )
+            sufixo_arquivo = sanitizar_nome_arquivo(
+                st.session_state.get("empresa_vaga", ""), fallback="Geral"
+            )
+            nome_arquivo_pdf = f"Curriculo_{nome_candidato_arquivo}_{sufixo_arquivo}.pdf"
 
             st.download_button(
                 label=f"⬇️ Baixar PDF Pronto para ATS ({nome_arquivo_pdf})",
