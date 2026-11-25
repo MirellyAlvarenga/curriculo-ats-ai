@@ -1,0 +1,219 @@
+{
+  "dados_pessoais": {
+    "nome_exibicao": "Mirelly Alvarenga",
+    "nome_completo": "Mirelly Pego Cordeiro de Alvarenga",
+    "titulo_base": "Analista de Dados Júnior | Engenharia de Dados & BI",
+    "localizacao": "Belo Horizonte, MG, Brasil (Aberta a remoto, híbrido ou presencial)",
+    "email": "mirellypego@gmail.com",
+    "portfolio": "https://portfolio-mirelly-alvarenga.vercel.app",
+    "dashboard_producao": "https://mirelly-climate-data-lake.streamlit.app",
+    "linkedin": "https://www.linkedin.com/in/mirelly-pego-cordeiro-de-alvarenga/",
+    "github": "https://github.com/MirellyAlvarenga",
+    "telefone": "(31) 98316-5358"
+  },
+  "perfil_base": "Graduanda em Engenharia de Software pela PUC Minas, com formação técnica em Informática pelo IFMG e atuação em dados de ponta a ponta: desenvolvimento de pipelines de ETL, modelagem e manutenção de data warehouses em PostgreSQL e criação de relatórios e modelos semânticos no Power BI com foco em performance. Experiência anterior em desenvolvimento de software web que facilita entender como os dados nascem nos sistemas.",
+  "experiencias": [
+    {
+      "cargo": "Analista de Dados Júnior",
+      "empresa": "dti digital",
+      "periodo": "Ago 2026 - Presente",
+      "modelo": "Tempo integral · Híbrido",
+      "realizacoes": [
+        "Desenvolvimento de pipelines de ETL e modelagem de data warehouses em PostgreSQL.",
+        "Criação de relatórios e modelos semânticos no Power BI, com foco em performance.",
+        "Transformação de dados brutos em informação confiável para a tomada de decisão."
+      ],
+      "tecnologias": [
+        "Power BI",
+        "Engenharia de Dados",
+        "PostgreSQL"
+      ]
+    },
+    {
+      "cargo": "Estágio em Análise de Dados",
+      "empresa": "dti digital",
+      "periodo": "Jan 2025 - Jul 2026",
+      "modelo": "Estágio · Híbrido",
+      "realizacoes": [
+        "Consultas e análises em SQL para apoiar as áreas de negócio.",
+        "Construção de dashboards e indicadores no Power BI."
+      ],
+      "tecnologias": [
+        "SQL",
+        "Análise de Dados",
+        "Power BI"
+      ]
+    },
+    {
+      "cargo": "Desenvolvimento de Software",
+      "empresa": "dti digital · Web",
+      "periodo": "Ago 2024 - Dez 2024",
+      "modelo": "Híbrido",
+      "realizacoes": [
+        "Desenvolvimento back-end utilizando Java.",
+        "Desenvolvimento front-end com o framework Angular."
+      ],
+      "tecnologias": [
+        "Java",
+        "Angular"
+      ]
+    }
+  ],
+  "projetos": [
+    {
+      "nome": "Climate Data Lake",
+      "subtitulo": "Séries temporais & análise climática",
+      "descricao": "Pipeline end-to-end de engenharia e análise de dados meteorológicos sobre arquitetura Medalhão, com mais de uma década de séries diárias (2016–2026) de 5 capitais brasileiras (Belo Horizonte, São Paulo, Rio de Janeiro, Manaus e Porto Alegre), respondendo a tendências térmicas de longo prazo, anomalias climatológicas e regimes sazonais.",
+      "destaques_tecnicos": [
+        "Extração resiliente: Ingestão da Open-Meteo API em Python com exponential backoff + jitter para HTTP 429 e checkpointing idempotente para evitar reprocessamento.",
+        "Data lake em Parquet: Bronze com JSON bruto e metadados UTC, Silver em Parquet Snappy particionado estilo Hive (cidade/ano) e Gold com tabelas analíticas leves (< 1 MB).",
+        "SQL analítico no DuckDB: Partition pruning, predicate pushdown, médias móveis de 7 e 30 dias com window functions e recordes históricos com ARG_MAX / ARG_MIN.",
+        "Gates de qualidade: Pytest valida estações do Hemisfério Sul, deduplicação, ausência de nulos nas janelas móveis e limites físicos (máx >= mín, chuva não negativa).",
+        "Dashboard na nuvem: Relatório interativo em Streamlit + Plotly com KPIs e conclusões dinâmicas, publicado no Streamlit Community Cloud sem banco externo."
+      ],
+      "stack": [
+        "Python",
+        "Pandas",
+        "PyArrow",
+        "Apache Parquet",
+        "DuckDB",
+        "pytest",
+        "Streamlit",
+        "Plotly"
+      ]
+    },
+    {
+      "nome": "B2G Market Radar",
+      "subtitulo": "Plataforma end-to-end de Engenharia de Dados & BI",
+      "descricao": "Plataforma completa que ingere, enriquece, modela e visualiza dados abertos de licitações e contratos públicos do PNCP (Portal Nacional de Contratações Públicas) e da BrasilAPI.",
+      "destaques_tecnicos": [
+        "Ingestão incremental & resiliência: Extratores em Python (httpx, SQLAlchemy) com paginação automática, exponential backoff, cache de CNPJs e controle de watermark via tabela de auditoria (audit.pipeline_runs).",
+        "Arquitetura Medallion & modelagem dimensional: Camadas Bronze (JSONB bruto), Silver (carga incremental delete+insert no dbt Core) e Gold (Star Schema com 4 dimensões e 2 tabelas fato em PostgreSQL).",
+        "Data quality na fonte: Detecção e isolamento de outliers de digitação em portais públicos via flag booleana (is_outlier_valor), testes unitários com pytest e testes singulares/schema no dbt.",
+        "Orquestração & CI/CD: Pipeline containerizado com Docker Compose, DAG granular por tarefas no Apache Airflow e automação CI/CD + catálogo interativo (dbt docs) no GitHub Actions.",
+        "Visualização executiva: Dashboard de 3 páginas no Power BI versionado em formato .pbip (Panorama de Mercado, Inteligência de Pricing & Deságio e Market Share de Fornecedores)."
+      ],
+      "stack": [
+        "Python",
+        "dbt Core",
+        "Apache Airflow",
+        "PostgreSQL",
+        "Docker",
+        "GitHub Actions",
+        "pytest",
+        "Power BI"
+      ]
+    }
+  ],
+  "competencias": {
+    "engenharia_de_dados": [
+      "Python",
+      "SQL",
+      "dbt Core",
+      "Apache Airflow",
+      "Docker",
+      "PostgreSQL",
+      "DuckDB",
+      "Apache Parquet",
+      "Databricks",
+      "Pentaho",
+      "GitHub Actions"
+    ],
+    "bi_e_analise": [
+      "Power BI",
+      "Streamlit",
+      "Plotly",
+      "Modelos Semânticos",
+      "Modelagem Dimensional",
+      "Excel",
+      "Estatística",
+      "Visualização de Dados"
+    ],
+    "automacao_e_desenvolvimento": [
+      "Pipefy",
+      "Power Platform",
+      "Power Apps",
+      "Java",
+      "Angular",
+      "Git"
+    ],
+    "soft_skills": [
+      "Pensamento Analítico",
+      "Comunicação",
+      "Pensamento Crítico"
+    ],
+    "idiomas": [
+      "Português (Nativo)",
+      "Inglês (Profissional)"
+    ]
+  },
+  "certificacoes": [
+    {
+      "titulo": "Databricks Fundamentals",
+      "emissor": "Databricks",
+      "data": "Out 2026"
+    },
+    {
+      "titulo": "Introdução à Power Platform",
+      "emissor": "VICO Treinamentos",
+      "data": "Out 2026"
+    },
+    {
+      "titulo": "Intro to SQL",
+      "emissor": "Kaggle",
+      "data": "Out 2026"
+    },
+    {
+      "titulo": "Data Visualization and Presentation",
+      "emissor": "IBM",
+      "data": "Out 2026"
+    },
+    {
+      "titulo": "Data Preparation for Analysis",
+      "emissor": "IBM",
+      "data": "Out 2026"
+    },
+    {
+      "titulo": "Data Collection and Analysis",
+      "emissor": "IBM",
+      "data": "Out 2026"
+    },
+    {
+      "titulo": "Introduction to Inferential and Descriptive Statistics",
+      "emissor": "IBM",
+      "data": "Out 2026"
+    },
+    {
+      "titulo": "Data Usability for Organizations",
+      "emissor": "IBM",
+      "data": "Out 2026"
+    },
+    {
+      "titulo": "Data Classification",
+      "emissor": "IBM",
+      "data": "Out 2026"
+    },
+    {
+      "titulo": "Data Fundamentals",
+      "emissor": "IBM",
+      "data": "Set 2026"
+    },
+    {
+      "titulo": "Pipefy Process Automation",
+      "emissor": "Pipefy",
+      "data": "Abr 2026"
+    }
+  ],
+  "educacao": [
+    {
+      "curso": "Bacharelado em Engenharia de Software",
+      "instituicao": "PUC Minas",
+      "periodo": "2024 - 2027"
+    },
+    {
+      "curso": "Técnico em Informática",
+      "instituicao": "IFMG",
+      "periodo": "Concluído"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+# Ambiente Virtual
+.venv/
+venv/
+env/
+
+# Chaves e Segredos (NUNCA subir para o GitHub)
+.env
+.streamlit/secrets.toml
+
+# Cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PDFs gerados localmente
+*.pdf
