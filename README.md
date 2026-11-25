@@ -42,7 +42,7 @@ curriculo-ats-ai/
 
 * **Multi-Tenant via Upload Validado (`app.py` + `src/schemas.py`):** Visitantes podem baixar o `template_curriculo_mestre.json` na barra lateral, preencher com seus próprios dados e realizar o upload. O schema `CurriculoMestre` garante integridade estrutural com fallback seguro para o perfil padrão em caso de erro de formatação.
 * **Zero Alucinação & Determinismo (`src/ai_engine.py`):** O modelo opera com temperatura reduzida (`0.2`) e instruções explícitas que proíbem a invenção de ferramentas, métricas, datas ou cargos ausentes no JSON de origem.
-* **Garantia de Contrato com Structured Outputs (`src/schemas.py`):** O retorno do `gemini-2.5-flash` é validado diretamente contra schemas `Pydantic`, eliminando erros de parsing JSON e bloqueando marcações Markdown indesejadas (`**`, `#`, `*`) que sujam PDFs e formulários ATS.
+* **Garantia de Contrato com Structured Outputs (`src/schemas.py`):** O retorno do `gemini-3.8-flash` é validado diretamente contra schemas `Pydantic`, eliminando erros de parsing JSON e bloqueando marcações Markdown indesejadas (`**`, `#`, `*`) que sujam PDFs e formulários ATS.
 * **Geração de PDF Pure-Python (`src/pdf_generator.py`):** Construído com `fpdf2` sem dependências nativas externas (como GTK/Cairo), garantindo portabilidade total entre Windows, Linux e Streamlit Community Cloud, com sanitização automática de nomes de arquivo.
 * **Human-in-the-Loop:** Todos os textos adaptados (Título, Resumo, Experiências e Projetos) são carregados em campos editáveis antes da geração do arquivo final.
 

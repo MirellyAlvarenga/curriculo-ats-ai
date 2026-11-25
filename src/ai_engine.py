@@ -42,7 +42,7 @@ Analise a vaga e gere o JSON estruturado do currículo adaptado seguindo rigoros
 """
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.8-flash",
         contents=prompt_usuario,
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_INSTRUCTION,
