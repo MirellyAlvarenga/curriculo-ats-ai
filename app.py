@@ -14,17 +14,16 @@ load_dotenv()
 
 # Configuração da página
 st.set_page_config(
-    page_title="ATS Resume Tailor | Mirelly Alvarenga",
+    page_title="ATS Resume Tailor | Adaptador de Currículos",
     page_icon="📄",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# CSS minimalista para melhorar legibilidade
+# CSS minimalista respeitando o tema ativo (Light/Dark Mode) do usuário
 st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 2rem; }
-    .stMetric { background-color: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #e9ecef; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -149,8 +148,8 @@ def main():
         )
 
     # --- ÁREA PRINCIPAL ---
-    st.title("📄 ATS Resume Tailor — Engenharia & Análise de Dados")
-    st.caption("Adaptação inteligente de currículo baseada em evidências reais, otimizada para filtros ATS (Gupy, Greenhouse, Lever, LinkedIn).")
+    st.title("📄 ATS Resume Tailor — Adaptador Inteligente de Currículos")
+    st.caption("Adaptação de currículos baseada em evidências reais, otimizada para filtros ATS (Gupy, Greenhouse, Lever, LinkedIn).")
 
     col_entrada, col_resultado = st.columns([1, 1.25], gap="large")
 
@@ -211,7 +210,8 @@ def main():
             # 1. Diagnóstico ATS
             m1, m2 = st.columns([1, 2])
             with m1:
-                st.metric("Aderência Estimada (ATS)", f"{res.diagnostico_ats.score_aderencia}%")
+                with st.container(border=True):
+                    st.metric("Aderência Estimada (ATS)", f"{res.diagnostico_ats.score_aderencia}%")
             with m2:
                 st.markdown("**Palavras-chave da vaga identificadas:**")
                 st.write(", ".join(res.diagnostico_ats.palavras_chave_vaga))
@@ -221,26 +221,28 @@ def main():
                     for dica in res.diagnostico_ats.gaps_e_dicas:
                         st.markdown(f"- {dica}")
 
-            # 2. Estimativa Salarial (CLT & PJ)
+            # 2. Estimativa Salarial (CLT & PJ) com containers adaptáveis ao tema
             with st.expander(
                 f"💰 Sugestão de Pretensão Salarial ({res.estimativa_salarial.senioridade_inferida} | {res.estimativa_salarial.moeda})",
                 expanded=True
             ):
                 sal_c1, sal_c2 = st.columns(2)
                 with sal_c1:
-                    st.metric(
-                        label="Alvo Sugerido CLT (Bruto)",
-                        value=res.estimativa_salarial.clt_sugerido_alvo,
-                        delta=f"Faixa: {res.estimativa_salarial.clt_faixa}",
-                        delta_color="off"
-                    )
+                    with st.container(border=True):
+                        st.metric(
+                            label="Alvo Sugerido CLT (Bruto)",
+                            value=res.estimativa_salarial.clt_sugerido_alvo,
+                            delta=f"Faixa: {res.estimativa_salarial.clt_faixa}",
+                            delta_color="off"
+                        )
                 with sal_c2:
-                    st.metric(
-                        label="Alvo Sugerido PJ (Mensal)",
-                        value=res.estimativa_salarial.pj_sugerido_alvo,
-                        delta=f"Faixa: {res.estimativa_salarial.pj_faixa}",
-                        delta_color="off"
-                    )
+                    with st.container(border=True):
+                        st.metric(
+                            label="Alvo Sugerido PJ (Mensal)",
+                            value=res.estimativa_salarial.pj_sugerido_alvo,
+                            delta=f"Faixa: {res.estimativa_salarial.pj_faixa}",
+                            delta_color="off"
+                        )
                 st.caption(f"**Critério:** {res.estimativa_salarial.justificativa}")
 
             st.divider()
