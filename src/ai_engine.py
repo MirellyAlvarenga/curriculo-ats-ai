@@ -1,5 +1,7 @@
+import time
 from google import genai
 from google.genai import types
+from google.genai.errors import APIError
 from src.schemas import CurriculoMestre, CurriculoAdaptado
 
 
@@ -22,6 +24,13 @@ REGRAS INVIOLÁVEIS (ANTI-ALUCINAÇÃO E FORMATAÇÃO):
 6. LIMITE DE CARACTERES GUPY: O campo `texto_apresentacao_gupy` deve ser escrito em primeira pessoa, tom profissional e direto, com NO MÁXIMO 580 caracteres.
 """
 
+# Ordem de prioridade: tenta o principal com retries e usa fallback se houver pico de demanda (503)
+MODELOS_PRIORIDADE = [
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash",
+]
+
 
 def adaptar_curriculo(
     api_key: str,
@@ -29,7 +38,7 @@ def adaptar_curriculo(
     descricao_vaga: str,
     idioma_selecionado: str
 ) -> CurriculoAdaptado:
-    """Executa a chamada estruturada ao Gemini 2.5 Flash para adaptar o currículo."""
+    """Executa a chamada estruturada ao Gemini com retry exponencial e fallback de modelo."""
     client = genai.Client(api_key=api_key)
 
     prompt_usuario = f"""
@@ -45,19 +54,37 @@ def adaptar_curriculo(
 Analise a vaga e gere o JSON estruturado do currículo adaptado seguindo rigorosamente todas as regras do sistema.
 """
 
-    response = client.models.generate_content(
-        model="gemini-3.8-flash",
-        contents=prompt_usuario,
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_INSTRUCTION,
-            response_mime_type="application/json",
-            response_schema=CurriculoAdaptado,
-            temperature=0.2,  # Baixa temperatura para máxima fidelidade factual
-        ),
-    )
+    ultimo_erro = None
 
-    # Valida e converte o JSON retornado diretamente no modelo Pydantic
-    if response.parsed:
-        return response.parsed
-    
-    return CurriculoAdaptado.model_validate_json(response.text)
+    for modelo in MODELOS_PRIORIDADE:
+        for tentativa in range(3):  # Até 3 tentativas por modelo
+            try:
+                response = client.models.generate_content(
+                    model=modelo,
+                    contents=prompt_usuario,
+                    config=types.GenerateContentConfig(
+                        system_instruction=SYSTEM_INSTRUCTION,
+                        response_mime_type="application/json",
+                        response_schema=CurriculoAdaptado,
+                        temperature=0.2,
+                    ),
+                )
+
+                if response.parsed:
+                    return response.parsed
+
+                return CurriculoAdaptado.model_validate_json(response.text)
+
+            except APIError as e:
+                ultimo_erro = e
+                # 503 (sobrecarga) ou 429 (rate limit): aguarda e tenta novamente
+                if e.code in (503, 429):
+                    tempo_espera = 2 ** (tentativa + 1)  # 2s, 4s, 8s
+                    time.sleep(tempo_espera)
+                    continue
+                # Erros definitivos (ex: 400 API Key inválida, 403 permissão) interrompem imediatamente
+                raise e
+
+    raise RuntimeError(
+        f"Todos os modelos Gemini estão temporariamente indisponíveis devido a alta demanda. Detalhe: {ultimo_erro}"
+    )
