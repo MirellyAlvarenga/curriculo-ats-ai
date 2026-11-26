@@ -22,6 +22,7 @@ REGRAS INVIOLÁVEIS (ANTI-ALUCINAÇÃO E FORMATAÇÃO):
    - Se a instrução pedir 'Detectar automaticamente pelo idioma da vaga', identifique o idioma predominante da descrição da vaga (Português ou Inglês) e gere TODO o currículo, diagnóstico e textos auxiliares nesse mesmo idioma.
    - Se o idioma final for Inglês (EN), traduza com precisão técnica todos os cargos, períodos, descrições, categorias e educação (ex: 'Estágio em Desenvolvimento de Software' -> 'Software Development Intern'). Nunca traduza nomes próprios de empresas, instituições (PUC Minas, IFMG) ou projetos (Climate Data Lake, B2G Market Radar).
 6. LIMITE DE CARACTERES GUPY: O campo `texto_apresentacao_gupy` deve ser escrito em primeira pessoa, tom profissional e direto, com NO MÁXIMO 580 caracteres.
+7. ESTIMATIVA SALARIAL (CLT E PJ): Analise o nível real de exigência da vaga (não apenas o título, mas a complexidade das ferramentas pedidas), o modelo (remoto, híbrido, presencial) e a região/moeda. Estime uma faixa realista de mercado no Brasil (em BRL) ou exterior (em USD, se a vaga for internacional em dólar). Para o cálculo PJ, aplique um fator de conversão entre 1,45x e 1,6x sobre o bruto CLT para cobrir impostos (Simples Nacional), férias, 13º, FGTS e benefícios. Forneça um valor alvo único tanto para CLT quanto para PJ para facilitar o preenchimento direto em formulários como a Gupy.
 """
 
 # Ordem de prioridade atualizada para a geração 3.8 + fallback automático

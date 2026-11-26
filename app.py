@@ -221,9 +221,31 @@ def main():
                     for dica in res.diagnostico_ats.gaps_e_dicas:
                         st.markdown(f"- {dica}")
 
+            # 2. Estimativa Salarial (CLT & PJ)
+            with st.expander(
+                f"💰 Sugestão de Pretensão Salarial ({res.estimativa_salarial.senioridade_inferida} | {res.estimativa_salarial.moeda})",
+                expanded=True
+            ):
+                sal_c1, sal_c2 = st.columns(2)
+                with sal_c1:
+                    st.metric(
+                        label="Alvo Sugerido CLT (Bruto)",
+                        value=res.estimativa_salarial.clt_sugerido_alvo,
+                        delta=f"Faixa: {res.estimativa_salarial.clt_faixa}",
+                        delta_color="off"
+                    )
+                with sal_c2:
+                    st.metric(
+                        label="Alvo Sugerido PJ (Mensal)",
+                        value=res.estimativa_salarial.pj_sugerido_alvo,
+                        delta=f"Faixa: {res.estimativa_salarial.pj_faixa}",
+                        delta_color="off"
+                    )
+                st.caption(f"**Critério:** {res.estimativa_salarial.justificativa}")
+
             st.divider()
 
-            # 2. Revisão Rápida (Human-in-the-loop)
+            # 3. Revisão Rápida (Human-in-the-loop)
             st.markdown("### ✏️ Revisão Rápida (Editável antes do PDF)")
             st.caption("Qualquer alteração feita nos campos abaixo será refletida imediatamente no PDF baixado.")
 
@@ -277,7 +299,7 @@ def main():
             curriculo_final.experiencias = experiencias_editadas
             curriculo_final.projetos = projetos_editados
 
-            # 3. Geração e Download do PDF
+            # 4. Geração e Download do PDF
             pdf_bytes = gerar_pdf_ats(curriculo_mestre, curriculo_final)
             nome_candidato_arquivo = sanitizar_nome_arquivo(
                 curriculo_mestre.dados_pessoais.nome_exibicao, fallback="Candidato"
@@ -298,7 +320,7 @@ def main():
 
             st.divider()
 
-            # 4. Blocos Copiáveis para Gupy / LinkedIn
+            # 5. Blocos Copiáveis para Gupy / LinkedIn
             st.markdown("### 📋 Textos Rápidos para Gupy & LinkedIn")
             
             chars_apresentacao = len(res.texto_apresentacao_gupy)

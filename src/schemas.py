@@ -110,8 +110,28 @@ class EducacaoAdaptada(BaseModel):
     curso: str
     instituicao: str
     periodo: str
-
-
+class EstimativaSalarial(BaseModel):
+    senioridade_inferida: str = Field(
+        description="Nível inferido pela descrição da vaga (ex: Júnior, Pleno, Estágio)."
+    )
+    moeda: str = Field(
+        description="Moeda da estimativa (ex: 'BRL (R$)' para vagas no Brasil ou 'USD ($)' para vagas internacionais)."
+    )
+    clt_faixa: str = Field(
+        description="Faixa salarial mensal bruta estimada no regime CLT (ex: 'R$ 4.500 a R$ 5.800')."
+    )
+    clt_sugerido_alvo: str = Field(
+        description="Valor único recomendado para preencher em formulários CLT (ex: 'R$ 5.200')."
+    )
+    pj_faixa: str = Field(
+        description="Faixa mensal estimada no regime PJ considerando multiplicador de ~1.45x a 1.6x sobre o CLT (ex: 'R$ 6.800 a R$ 8.800')."
+    )
+    pj_sugerido_alvo: str = Field(
+        description="Valor único recomendado para preencher em formulários PJ (ex: 'R$ 7.800')."
+    )
+    justificativa: str = Field(
+        description="Explicação objetiva (2 a 3 linhas) dos fatores da vaga que basearam essa faixa (stack, senioridade, remoto/híbrido, porte)."
+    )
 class CurriculoAdaptado(BaseModel):
     idioma_final: Literal["PT-BR", "EN"] = Field(
         description="Idioma utilizado na geração de todo o conteúdo adaptado."
@@ -136,3 +156,4 @@ class CurriculoAdaptado(BaseModel):
     competencias_gupy_linkedin: List[str] = Field(
         description="Lista plana das 15 a 25 principais competências reais para colar separadas por vírgula em formulários."
     )
+    estimativa_salarial: EstimativaSalarial
