@@ -27,7 +27,7 @@ REGRAS INVIOLÁVEIS (ANTI-ALUCINAÇÃO E FORMATAÇÃO):
 
 MODELOS_PRIORIDADE = [
     "gemini-3.8-flash",
-    "gemini-2.5-flash-lite",
+    "gemini-3.5-flash-lite",
 ]
 
 
@@ -62,7 +62,6 @@ def adaptar_curriculo(
                         response_mime_type="application/json",
                         response_schema=CurriculoAdaptado,
                         temperature=0.2,
-                        thinking_config=types.ThinkingConfig(thinking_budget=0),
                     ),
                 )
 
@@ -73,10 +72,8 @@ def adaptar_curriculo(
 
             except APIError as e:
                 ultimo_erro = e
-                # 404 (modelo inexistente): pula imediatamente para o fallback
                 if e.code == 404:
                     break
-                # 504 (deadline exceeded), 503 (sobrecarga) ou 429 (rate limit): aguarda e tenta novamente
                 if e.code in (504, 503, 429):
                     time.sleep(2)
                     continue
