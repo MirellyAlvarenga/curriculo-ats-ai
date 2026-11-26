@@ -22,13 +22,13 @@ REGRAS INVIOLÁVEIS (ANTI-ALUCINAÇÃO E FORMATAÇÃO):
    - Se a instrução pedir 'Detectar automaticamente pelo idioma da vaga', identifique o idioma predominante da descrição da vaga (Português ou Inglês) e gere TODO o currículo, diagnóstico e textos auxiliares nesse mesmo idioma.
    - Se o idioma final for Inglês (EN), traduza com precisão técnica todos os cargos, períodos, descrições, categorias e educação (ex: 'Estágio em Desenvolvimento de Software' -> 'Software Development Intern'). Nunca traduza nomes próprios de empresas, instituições (PUC Minas, IFMG) ou projetos (Climate Data Lake, B2G Market Radar).
 6. LIMITE DE CARACTERES GUPY: O campo `texto_apresentacao_gupy` deve ser escrito em primeira pessoa, tom profissional e direto, com NO MÁXIMO 580 caracteres.
-7. ESTIMATIVA SALARIAL (CLT E PJ): Analise o nível real de exigência da vaga (não apenas o título, mas a complexidade das ferramentas pedidas), o modelo (remoto, híbrido, presencial) e a região/moeda. Estime uma faixa realista de mercado no Brasil (em BRL) ou exterior (em USD, se a vaga for internacional em dólar). Para o cálculo PJ, aplique um fator de conversão entre 1,45x e 1,6x sobre o bruto CLT para cobrir impostos (Simples Nacional), férias, 13º, FGTS e benefícios. Forneça um valor alvo único tanto para CLT quanto para PJ para facilitar o preenchimento direto em formulários como a Gupy.
+7. ESTIMATIVA SALARIAL (CLT E PJ): Analise o nível real de exigência da vaga, o modelo (remoto, híbrido, presencial) e a região/moeda. Estime uma faixa realista de mercado no Brasil (em BRL) ou exterior (em USD, se a vaga for internacional em dólar). Para o cálculo PJ, aplique um fator de conversão entre 1,45x e 1,6x sobre o bruto CLT para cobrir impostos, férias, 13º, FGTS e benefícios. Forneça um valor alvo único tanto para CLT quanto para PJ.
 """
 
-# Ordem de prioridade atualizada para a geração 3.8 + fallback automático
+# Modelos mais rápidos primeiro (flash-lite tem latência baixíssima para JSON estruturado)
 MODELOS_PRIORIDADE = [
-    "gemini-3.8-flash",
     "gemini-3.8-flash-lite",
+    "gemini-3.8-flash",
     "gemini-3.5-flash",
 ]
 
@@ -39,26 +39,22 @@ def adaptar_curriculo(
     descricao_vaga: str,
     idioma_selecionado: str
 ) -> CurriculoAdaptado:
-    """Executa a chamada estruturada ao Gemini com retry exponencial e fallback de modelo."""
-    client = genai.Client(api_key=api_key)
+    """Executa a chamada estruturada ao Gemini com baixa latência, thinking desligado e fallback rápido."""
+    client = genai.Client(
+        api_key=api_key,
+        http_options=types.HttpOptions(timeout=45_000)  # Timeout máximo de 45s por tentativa
+    )
 
-    prompt_usuario = f"""
-### CONFIGURAÇÃO DE IDIOMA SOLICITADA:
-{idioma_selecionado}
-
-### CURRÍCULO MESTRE (FONTE ÚNICA DA VERDADE EM JSON):
-{curriculo_mestre.model_dump_json(indent=2)}
-
-### DESCRIÇÃO DA VAGA ALVO:
-{descricao_vaga}
-
-Analise a vaga e gere o JSON estruturado do currículo adaptado seguindo rigorosamente todas as regras do sistema.
-"""
+    prompt_usuario = (
+        f"IDIOMA SOLICITADO: {idioma_selecionado}\n\n"
+        f"CURRÍCULO MESTRE:\n{curriculo_mestre.model_dump_json()}\n\n"
+        f"DESCRIÇÃO DA VAGA:\n{descricao_vaga}"
+    )
 
     ultimo_erro = None
 
     for modelo in MODELOS_PRIORIDADE:
-        for tentativa in range(3):  # Até 3 tentativas por modelo
+        for tentativa in range(2):  # Máximo 2 tentativas rápidas por modelo
             try:
                 response = client.models.generate_content(
                     model=modelo,
@@ -68,6 +64,7 @@ Analise a vaga e gere o JSON estruturado do currículo adaptado seguindo rigoros
                         response_mime_type="application/json",
                         response_schema=CurriculoAdaptado,
                         temperature=0.2,
+                        thinking_config=types.ThinkingConfig(thinking_budget=0),
                     ),
                 )
 
@@ -78,17 +75,17 @@ Analise a vaga e gere o JSON estruturado do currículo adaptado seguindo rigoros
 
             except APIError as e:
                 ultimo_erro = e
-                # 404 (modelo indisponível/descontinuado): pula direto para o próximo modelo da lista
                 if e.code == 404:
                     break
-                # 503 (sobrecarga) ou 429 (rate limit): aguarda e tenta novamente
                 if e.code in (503, 429):
-                    tempo_espera = 2 ** (tentativa + 1)  # 2s, 4s, 8s
-                    time.sleep(tempo_espera)
+                    time.sleep(1.5)
                     continue
-                # Erros definitivos (ex: 400 API Key inválida, 403 permissão) interrompem imediatamente
                 raise e
+            except Exception as e:
+                # Captura timeouts de rede e tenta o próximo modelo imediatamente
+                ultimo_erro = e
+                break
 
     raise RuntimeError(
-        f"Nenhum modelo Gemini pôde processar a requisição no momento. Detalhe: {ultimo_erro}"
+        f"Os servidores do Gemini demoraram a responder. Tente novamente em alguns segundos. Detalhe: {ultimo_erro}"
     )
