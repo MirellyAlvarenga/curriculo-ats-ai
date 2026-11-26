@@ -83,6 +83,14 @@ def main():
             st.success("API Key pronta para uso.", icon="✅")
         else:
             st.warning("API Key não encontrada. Cole sua chave acima para gerar.", icon="⚠️")
+
+        telefone_padrao = obter_segredo_ou_env("USER_PHONE")
+        telefone_input = st.text_input(
+            "Telefone para o PDF (Opcional)",
+            value=telefone_padrao,
+            placeholder="(31) 90000-0000",
+            help="Preenchido automaticamente pelo .env local ou digitado aqui para sair no cabeçalho do PDF."
+        )
             
         st.divider()
         st.subheader("📂 Currículo Base (JSON)")
@@ -116,11 +124,9 @@ def main():
                 curriculo_mestre = curriculo_padrao.model_copy(deep=True)
                 arquivo_upload = None
 
-        # Se estiver usando o currículo padrão e houver USER_PHONE no .env/secrets, injeta o telefone real
-        if arquivo_upload is None:
-            telefone_privado = obter_segredo_ou_env("USER_PHONE")
-            if telefone_privado:
-                curriculo_mestre.dados_pessoais.telefone = telefone_privado
+        # Se estiver usando o currículo padrão e houver telefone configurado/digitado, injeta no PDF
+        if arquivo_upload is None and telefone_input.strip():
+            curriculo_mestre.dados_pessoais.telefone = telefone_input.strip()
 
         st.info(
             f"**Fonte ativa:** {origem_dados}\n\n"

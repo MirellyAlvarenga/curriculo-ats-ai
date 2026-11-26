@@ -3,7 +3,7 @@
     "nome_exibicao": "Mirelly Alvarenga",
     "nome_completo": "Mirelly Pego Cordeiro de Alvarenga",
     "titulo_base": "Analista de Dados Júnior | Engenharia de Dados & BI",
-    "localizacao": "Belo Horizonte, MG, Brasil (Aberta a remoto, híbrido ou presencial)",
+    "localizacao": "Belo Horizonte, MG, Brasil",
     "email": "mirellypego@gmail.com",
     "portfolio": "https://portfolio-mirelly-alvarenga.vercel.app",
     "dashboard_producao": "https://mirelly-climate-data-lake.streamlit.app",
@@ -45,7 +45,7 @@
       ]
     },
     {
-      "cargo": "Desenvolvimento de Software",
+      "cargo": "Estágio em Desenvolvimento de Software",
       "empresa": "dti digital · Web",
       "periodo": "Ago 2024 - Dez 2024",
       "modelo": "Híbrido",
