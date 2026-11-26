@@ -50,8 +50,8 @@ def obter_api_key(chave_manual: str) -> str:
 
 
 @st.cache_data
-def carregar_curriculo_padrao(caminho: str = "data/curriculo_mestre.json") -> CurriculoMestre:
-    """Carrega e valida o JSON mestre padrão usando Pydantic."""
+def carregar_curriculo_padrao(caminho: str = "data/curriculo_mestre.json", mtime: float = 0.0) -> CurriculoMestre:
+    """Carrega e valida o JSON mestre padrão usando Pydantic (invalida cache se o arquivo mudar)."""
     with open(caminho, "r", encoding="utf-8") as f:
         dados = json.load(f)
     return CurriculoMestre(**dados)
@@ -95,9 +95,11 @@ def main():
         st.divider()
         st.subheader("📂 Currículo Base (JSON)")
 
-        # Carrega primeiro o currículo padrão (público) para servir de fallback e template
+        # Carrega primeiro o currículo padrão (público) monitorando alterações no arquivo
         try:
-            curriculo_padrao = carregar_curriculo_padrao()
+            caminho_padrao = "data/curriculo_mestre.json"
+            mtime = os.path.getmtime(caminho_padrao)
+            curriculo_padrao = carregar_curriculo_padrao(caminho=caminho_padrao, mtime=mtime)
         except Exception as e:
             st.error(f"Erro ao carregar `data/curriculo_mestre.json`: {e}")
             st.stop()
