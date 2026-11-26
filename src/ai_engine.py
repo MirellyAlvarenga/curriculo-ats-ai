@@ -25,11 +25,9 @@ REGRAS INVIOLÁVEIS (ANTI-ALUCINAÇÃO E FORMATAÇÃO):
 7. ESTIMATIVA SALARIAL (CLT E PJ): Analise o nível real de exigência da vaga, o modelo (remoto, híbrido, presencial) e a região/moeda. Estime uma faixa realista de mercado no Brasil (em BRL) ou exterior (em USD, se a vaga for internacional em dólar). Para o cálculo PJ, aplique um fator de conversão entre 1,45x e 1,6x sobre o bruto CLT para cobrir impostos, férias, 13º, FGTS e benefícios. Forneça um valor alvo único tanto para CLT quanto para PJ.
 """
 
-# Modelos mais rápidos primeiro (flash-lite tem latência baixíssima para JSON estruturado)
 MODELOS_PRIORIDADE = [
-    "gemini-3.8-flash-lite",
     "gemini-3.8-flash",
-    "gemini-3.5-flash",
+    "gemini-2.5-flash-lite",
 ]
 
 
@@ -39,10 +37,10 @@ def adaptar_curriculo(
     descricao_vaga: str,
     idioma_selecionado: str
 ) -> CurriculoAdaptado:
-    """Executa a chamada estruturada ao Gemini com baixa latência, thinking desligado e fallback rápido."""
+    """Executa a chamada estruturada ao Gemini com tratamento de 504/503/429 e fallback."""
     client = genai.Client(
         api_key=api_key,
-        http_options=types.HttpOptions(timeout=45_000)  # Timeout máximo de 45s por tentativa
+        http_options=types.HttpOptions(timeout=90_000)
     )
 
     prompt_usuario = (
@@ -54,7 +52,7 @@ def adaptar_curriculo(
     ultimo_erro = None
 
     for modelo in MODELOS_PRIORIDADE:
-        for tentativa in range(2):  # Máximo 2 tentativas rápidas por modelo
+        for tentativa in range(2):
             try:
                 response = client.models.generate_content(
                     model=modelo,
@@ -75,17 +73,18 @@ def adaptar_curriculo(
 
             except APIError as e:
                 ultimo_erro = e
+                # 404 (modelo inexistente): pula imediatamente para o fallback
                 if e.code == 404:
                     break
-                if e.code in (503, 429):
-                    time.sleep(1.5)
+                # 504 (deadline exceeded), 503 (sobrecarga) ou 429 (rate limit): aguarda e tenta novamente
+                if e.code in (504, 503, 429):
+                    time.sleep(2)
                     continue
                 raise e
             except Exception as e:
-                # Captura timeouts de rede e tenta o próximo modelo imediatamente
                 ultimo_erro = e
                 break
 
     raise RuntimeError(
-        f"Os servidores do Gemini demoraram a responder. Tente novamente em alguns segundos. Detalhe: {ultimo_erro}"
+        f"Os servidores do Gemini demoraram a responder (504/503). Tente novamente em alguns segundos. Detalhe: {ultimo_erro}"
     )
