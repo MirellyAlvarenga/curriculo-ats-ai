@@ -24,11 +24,11 @@ REGRAS INVIOLÁVEIS (ANTI-ALUCINAÇÃO E FORMATAÇÃO):
 6. LIMITE DE CARACTERES GUPY: O campo `texto_apresentacao_gupy` deve ser escrito em primeira pessoa, tom profissional e direto, com NO MÁXIMO 580 caracteres.
 """
 
-# Ordem de prioridade: tenta o principal com retries e usa fallback se houver pico de demanda (503)
+# Ordem de prioridade atualizada para a geração 3.8 + fallback automático
 MODELOS_PRIORIDADE = [
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite",
-    "gemini-2.0-flash",
+    "gemini-3.8-flash",
+    "gemini-3.8-flash-lite",
+    "gemini-3.5-flash",
 ]
 
 
@@ -77,6 +77,9 @@ Analise a vaga e gere o JSON estruturado do currículo adaptado seguindo rigoros
 
             except APIError as e:
                 ultimo_erro = e
+                # 404 (modelo indisponível/descontinuado): pula direto para o próximo modelo da lista
+                if e.code == 404:
+                    break
                 # 503 (sobrecarga) ou 429 (rate limit): aguarda e tenta novamente
                 if e.code in (503, 429):
                     tempo_espera = 2 ** (tentativa + 1)  # 2s, 4s, 8s
@@ -86,5 +89,5 @@ Analise a vaga e gere o JSON estruturado do currículo adaptado seguindo rigoros
                 raise e
 
     raise RuntimeError(
-        f"Todos os modelos Gemini estão temporariamente indisponíveis devido a alta demanda. Detalhe: {ultimo_erro}"
+        f"Nenhum modelo Gemini pôde processar a requisição no momento. Detalhe: {ultimo_erro}"
     )
